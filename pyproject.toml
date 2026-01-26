@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tokemon"
+version = "0.1.0"
+description = "A unified Python library for counting tokens across multiple LLM providers."
+authors = [{name = "Viacheslav Lymanskyi", email = "hello@lymagics.dev"}]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+dependencies = [
+    "tiktoken>=0.12.0",
+    "anthropic[aiohttp]>=0.76.0",
+    "xai-sdk>=1.5.0",
+    "google-genai>=1.60.0",
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.urls]
+Homepage = "https://github.com/lymagics/tokemon"
+Repository = "https://github.com/lymagics/tokemon"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tokemon"]

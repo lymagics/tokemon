@@ -1,0 +1,4 @@
+[run]
+omit =
+    # Skip tokenizers interfaces
+    src/tokemon/tokenizers/base.py

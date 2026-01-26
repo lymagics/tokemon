@@ -1,0 +1,11 @@
+line-length = 89
+src = ["src", "tests"]
+
+[lint]
+select = ["C901", "E501"]
+
+[format]
+quote-style = "single"
+
+[lint.mccabe]
+max-complexity = 8
