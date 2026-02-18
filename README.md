@@ -6,7 +6,7 @@ A unified Python library for counting tokens across multiple LLM providers. Toke
 
 - Unified API for token counting across multiple providers
 - Support for both synchronous and asynchronous operations
-- Built-in model validation
+- Dynamic model discovery via provider APIs
 - Type-safe responses with dataclass
 
 ## Installation
@@ -18,12 +18,12 @@ pip install tokemon
 ## Quick Start
 
 ```python
-from tokemon import tokemon, Provider, Mode
+from tokemon import tokemon, ProviderName, Mode
 
 # Create a tokenizer for your preferred provider
 tokenizer = tokemon(
     model="gpt-4o",
-    provider=Provider.OPENAI.value,
+    provider=ProviderName.OPENAI.value,
     mode=Mode.SYNC,
 )
 
@@ -41,11 +41,11 @@ print(response.provider)      # Provider name
 OpenAI tokenization uses [tiktoken](https://github.com/openai/tiktoken) and works offline without an API key.
 
 ```python
-from tokemon import tokemon, Provider, Mode
+from tokemon import tokemon, ProviderName, Mode
 
 tokenizer = tokemon(
     model="gpt-4o",
-    provider=Provider.OPENAI.value,
+    provider=ProviderName.OPENAI.value,
     mode=Mode.SYNC,
 )
 
@@ -62,11 +62,11 @@ export ANTHROPIC_API_KEY="your-api-key"
 ```
 
 ```python
-from tokemon import tokemon, Provider, Mode
+from tokemon import tokemon, ProviderName, Mode
 
 tokenizer = tokemon(
     model="claude-sonnet-4-5",
-    provider=Provider.ANTHROPIC.value,
+    provider=ProviderName.ANTHROPIC.value,
     mode=Mode.SYNC,
 )
 
@@ -78,12 +78,12 @@ print(f"Token count: {response.input_tokens}")
 
 ```python
 import asyncio
-from tokemon import tokemon, Provider, Mode
+from tokemon import tokemon, ProviderName, Mode
 
 async def main():
     tokenizer = tokemon(
         model="claude-sonnet-4-5",
-        provider=Provider.ANTHROPIC.value,
+        provider=ProviderName.ANTHROPIC.value,
         mode=Mode.ASYNC,
     )
     response = await tokenizer.count_tokens("Hello, world!")
@@ -101,11 +101,11 @@ export GEMINI_API_KEY="your-api-key"
 ```
 
 ```python
-from tokemon import tokemon, Provider, Mode
+from tokemon import tokemon, ProviderName, Mode
 
 tokenizer = tokemon(
     model="gemini-2.5-flash",
-    provider=Provider.GOOGLE.value,
+    provider=ProviderName.GOOGLE.value,
     mode=Mode.SYNC,
 )
 
@@ -117,12 +117,12 @@ print(f"Token count: {response.input_tokens}")
 
 ```python
 import asyncio
-from tokemon import tokemon, Provider, Mode
+from tokemon import tokemon, ProviderName, Mode
 
 async def main():
     tokenizer = tokemon(
         model="gemini-2.5-flash",
-        provider=Provider.GOOGLE.value,
+        provider=ProviderName.GOOGLE.value,
         mode=Mode.ASYNC,
     )
     response = await tokenizer.count_tokens("Hello, world!")
@@ -140,11 +140,11 @@ export XAI_API_KEY="your-api-key"
 ```
 
 ```python
-from tokemon import tokemon, Provider, Mode
+from tokemon import tokemon, ProviderName, Mode
 
 tokenizer = tokemon(
     model="grok-3",
-    provider=Provider.XAI.value,
+    provider=ProviderName.XAI.value,
     mode=Mode.SYNC,
 )
 
@@ -156,12 +156,12 @@ print(f"Token count: {response.input_tokens}")
 
 ```python
 import asyncio
-from tokemon import tokemon, Provider, Mode
+from tokemon import tokemon, ProviderName, Mode
 
 async def main():
     tokenizer = tokemon(
         model="grok-3",
-        provider=Provider.XAI.value,
+        provider=ProviderName.XAI.value,
         mode=Mode.ASYNC,
     )
     response = await tokenizer.count_tokens("Hello, world!")
@@ -170,29 +170,40 @@ async def main():
 asyncio.run(main())
 ```
 
-## Supported Models
+## Listing Available Models
 
-### OpenAI
-- GPT-5, GPT-4.1, GPT-4o, GPT-4, GPT-3.5-turbo
-- o1, o3, o4-mini
-- Text embedding models (text-embedding-ada-002, text-embedding-3-small, text-embedding-3-large)
-- Legacy models (davinci, curie, babbage, ada)
+Use `tokemon_models()` to discover models supported by each provider at runtime:
 
-### Anthropic
-- claude-opus-4-5, claude-sonnet-4-5, claude-haiku-4-5
-- claude-opus-4-1, claude-opus-4-0, claude-sonnet-4-0
-- claude-3-7-sonnet-latest, claude-3-haiku-20240307
+```python
+from tokemon import tokemon_models, ProviderName, Mode
 
-### Google AI
-- gemini-3-pro-preview, gemini-3-flash-preview
-- gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-lite
-- gemini-2.0-flash, gemini-2.0-flash-lite
+# Get a provider instance
+provider = tokemon_models(
+    provider=ProviderName.OPENAI.value,
+    mode=Mode.SYNC,
+)
 
-### xAI
-- grok-4-1-fast-reasoning, grok-4-1-fast-non-reasoning
-- grok-4-fast-reasoning, grok-4-fast-non-reasoning, grok-4-0709
-- grok-3, grok-3-mini
-- grok-code-fast-1, grok-2-vision-1212
+# List available models
+models = provider.models()
+print(models)
+```
+
+**Async example:**
+
+```python
+import asyncio
+from tokemon import tokemon_models, ProviderName, Mode
+
+async def main():
+    provider = tokemon_models(
+        provider=ProviderName.ANTHROPIC.value,
+        mode=Mode.ASYNC,
+    )
+    models = await provider.models()
+    print(models)
+
+asyncio.run(main())
+```
 
 ## Response Object
 

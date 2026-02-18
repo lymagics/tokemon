@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import MagicMock
 
-from tokemon import tokemon
-from tokemon.model import Provider, Mode
+from tokemon import tokemon, tokemon_models
+from tokemon.model import ProviderName, Mode
 
 
 @pytest.fixture
@@ -48,10 +48,53 @@ def mock_tokenizers(monkeypatch):
     return mocks
 
 
+@pytest.fixture
+def mock_providers(monkeypatch):
+    mocks = {}
+
+    def make_mock(name):
+        mock_cls = MagicMock(name=name)
+        mock_instance = MagicMock(name=f"{name}Instance")
+        mock_cls.return_value = mock_instance
+        mocks[name] = mock_cls
+        return mock_cls
+
+    monkeypatch.setattr(
+        "tokemon.scaffold.OpenAIProvider",
+        make_mock("OpenAIProvider"),
+    )
+    monkeypatch.setattr(
+        "tokemon.scaffold.AnthropicProvider",
+        make_mock("AnthropicProvider"),
+    )
+    monkeypatch.setattr(
+        "tokemon.scaffold.AsyncAnthropicProvider",
+        make_mock("AsyncAnthropicProvider"),
+    )
+    monkeypatch.setattr(
+        "tokemon.scaffold.GoogleProvider",
+        make_mock("GoogleProvider"),
+    )
+    monkeypatch.setattr(
+        "tokemon.scaffold.AsyncGoogleProvider",
+        make_mock("AsyncGoogleProvider"),
+    )
+    monkeypatch.setattr(
+        "tokemon.scaffold.XaiProvider",
+        make_mock("XaiProvider"),
+    )
+    monkeypatch.setattr(
+        "tokemon.scaffold.AsyncXaiProvider",
+        make_mock("AsyncXaiProvider"),
+    )
+
+    return mocks
+
+
 def test_openai_sync_factory(mock_tokenizers):
     result = tokemon(
         model="gpt-4",
-        provider=Provider.OPENAI.value,
+        provider=ProviderName.OPENAI.value,
         mode=Mode.SYNC,
     )
 
@@ -62,7 +105,7 @@ def test_openai_sync_factory(mock_tokenizers):
 def test_anthropic_sync_factory(mock_tokenizers):
     result = tokemon(
         model="claude-3",
-        provider=Provider.ANTHROPIC.value,
+        provider=ProviderName.ANTHROPIC.value,
         mode=Mode.SYNC,
     )
 
@@ -73,7 +116,7 @@ def test_anthropic_sync_factory(mock_tokenizers):
 def test_google_sync_factory(mock_tokenizers):
     result = tokemon(
         model="gemini-pro",
-        provider=Provider.GOOGLE.value,
+        provider=ProviderName.GOOGLE.value,
         mode=Mode.SYNC,
     )
 
@@ -84,7 +127,7 @@ def test_google_sync_factory(mock_tokenizers):
 def test_xai_sync_factory(mock_tokenizers):
     result = tokemon(
         model="grok-2",
-        provider=Provider.XAI.value,
+        provider=ProviderName.XAI.value,
         mode=Mode.SYNC,
     )
 
@@ -95,7 +138,7 @@ def test_xai_sync_factory(mock_tokenizers):
 def test_anthropic_async_factory(mock_tokenizers):
     result = tokemon(
         model="claude-3",
-        provider=Provider.ANTHROPIC.value,
+        provider=ProviderName.ANTHROPIC.value,
         mode=Mode.ASYNC,
     )
 
@@ -106,7 +149,7 @@ def test_anthropic_async_factory(mock_tokenizers):
 def test_google_async_factory(mock_tokenizers):
     result = tokemon(
         model="gemini-pro",
-        provider=Provider.GOOGLE.value,
+        provider=ProviderName.GOOGLE.value,
         mode=Mode.ASYNC,
     )
 
@@ -117,7 +160,7 @@ def test_google_async_factory(mock_tokenizers):
 def test_xai_async_factory(mock_tokenizers):
     result = tokemon(
         model="grok-2",
-        provider=Provider.XAI.value,
+        provider=ProviderName.XAI.value,
         mode=Mode.ASYNC,
     )
 
@@ -138,7 +181,7 @@ def test_unsupported_async_openai_raises(mock_tokenizers):
     with pytest.raises(ValueError, match="Unsupported provider"):
         tokemon(
             model="gpt-4",
-            provider=Provider.OPENAI.value,
+            provider=ProviderName.OPENAI.value,
             mode=Mode.ASYNC,
         )
 
@@ -146,9 +189,95 @@ def test_unsupported_async_openai_raises(mock_tokenizers):
 def test_invalid_mode_treated_as_sync(mock_tokenizers):
     result = tokemon(
         model="gpt-4",
-        provider=Provider.OPENAI.value,
+        provider=ProviderName.OPENAI.value,
         mode="not-a-real-mode",
     )
 
     mock_tokenizers["OpenAITokenizer"].assert_called_once_with(model="gpt-4")
     assert result is mock_tokenizers["OpenAITokenizer"].return_value
+
+
+def test_tokemon_models_openai_sync(mock_providers):
+    result = tokemon_models(
+        provider=ProviderName.OPENAI.value,
+        mode=Mode.SYNC,
+    )
+
+    mock_providers["OpenAIProvider"].assert_called_once_with()
+    assert result is mock_providers["OpenAIProvider"].return_value
+
+
+def test_tokemon_models_anthropic_sync(mock_providers):
+    result = tokemon_models(
+        provider=ProviderName.ANTHROPIC.value,
+        mode=Mode.SYNC,
+    )
+
+    mock_providers["AnthropicProvider"].assert_called_once_with()
+    assert result is mock_providers["AnthropicProvider"].return_value
+
+
+def test_tokemon_models_anthropic_async(mock_providers):
+    result = tokemon_models(
+        provider=ProviderName.ANTHROPIC.value,
+        mode=Mode.ASYNC,
+    )
+
+    mock_providers["AsyncAnthropicProvider"].assert_called_once_with()
+    assert result is mock_providers["AsyncAnthropicProvider"].return_value
+
+
+def test_tokemon_models_google_sync(mock_providers):
+    result = tokemon_models(
+        provider=ProviderName.GOOGLE.value,
+        mode=Mode.SYNC,
+    )
+
+    mock_providers["GoogleProvider"].assert_called_once_with()
+    assert result is mock_providers["GoogleProvider"].return_value
+
+
+def test_tokemon_models_google_async(mock_providers):
+    result = tokemon_models(
+        provider=ProviderName.GOOGLE.value,
+        mode=Mode.ASYNC,
+    )
+
+    mock_providers["AsyncGoogleProvider"].assert_called_once_with()
+    assert result is mock_providers["AsyncGoogleProvider"].return_value
+
+
+def test_tokemon_models_xai_sync(mock_providers):
+    result = tokemon_models(
+        provider=ProviderName.XAI.value,
+        mode=Mode.SYNC,
+    )
+
+    mock_providers["XaiProvider"].assert_called_once_with()
+    assert result is mock_providers["XaiProvider"].return_value
+
+
+def test_tokemon_models_xai_async(mock_providers):
+    result = tokemon_models(
+        provider=ProviderName.XAI.value,
+        mode=Mode.ASYNC,
+    )
+
+    mock_providers["AsyncXaiProvider"].assert_called_once_with()
+    assert result is mock_providers["AsyncXaiProvider"].return_value
+
+
+def test_tokemon_models_unsupported_provider_raises():
+    with pytest.raises(ValueError, match="Unsupported provider"):
+        tokemon_models(
+            provider="not-a-provider",
+            mode=Mode.SYNC,
+        )
+
+
+def test_tokemon_models_unsupported_async_openai_raises(mock_providers):
+    with pytest.raises(ValueError, match="Unsupported provider"):
+        tokemon_models(
+            provider=ProviderName.OPENAI.value,
+            mode=Mode.ASYNC,
+        )

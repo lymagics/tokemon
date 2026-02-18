@@ -5,12 +5,41 @@ from tokemon.tokenizers.xai import (
     XaiTokenizer,
     AsyncXaiTokenizer,
 )
-from tokemon.model import Provider, TokenizerResponse, SUPPORTED_PROVIDERS
+from tokemon.model import ProviderName, TokenizerResponse
+
+
+FAKE_MODELS = ["grok-3", "grok-3-mini", "grok-2-vision-1212"]
 
 
 @pytest.fixture
 def valid_model():
-    return SUPPORTED_PROVIDERS[Provider.XAI.value][0]
+    return FAKE_MODELS[0]
+
+
+@pytest.fixture
+def mock_sync_provider(monkeypatch):
+    mock_prov = MagicMock()
+    mock_prov.models.return_value = FAKE_MODELS
+
+    monkeypatch.setattr(
+        "tokemon.tokenizers.xai.XaiProvider",
+        lambda: mock_prov,
+    )
+
+    return mock_prov
+
+
+@pytest.fixture
+def mock_async_provider(monkeypatch):
+    mock_prov = MagicMock()
+    mock_prov.models = AsyncMock(return_value=FAKE_MODELS)
+
+    monkeypatch.setattr(
+        "tokemon.tokenizers.xai.AsyncXaiProvider",
+        lambda: mock_prov,
+    )
+
+    return mock_prov
 
 
 @pytest.fixture
@@ -43,31 +72,46 @@ def mock_async_xai_client(monkeypatch):
     return mock_client
 
 
-def test_sync_init_with_valid_model(valid_model, mock_sync_xai_client):
+def test_sync_init_with_valid_model(
+    valid_model, mock_sync_provider, mock_sync_xai_client
+):
     tokenizer = XaiTokenizer(valid_model)
 
     assert tokenizer.model == valid_model
     assert tokenizer.client is mock_sync_xai_client
 
 
-def test_async_init_with_valid_model(valid_model, mock_async_xai_client):
+def test_async_init_with_valid_model(
+    valid_model, mock_async_provider, mock_async_xai_client
+):
     tokenizer = AsyncXaiTokenizer(valid_model)
 
     assert tokenizer.model == valid_model
     assert tokenizer.client is mock_async_xai_client
 
 
-def test_sync_init_with_invalid_model():
+def test_sync_count_tokens_with_invalid_model(
+    mock_sync_provider, mock_sync_xai_client
+):
+    tokenizer = XaiTokenizer("invalid-model")
+
     with pytest.raises(ValueError, match="Unsupported model"):
-        XaiTokenizer("invalid-model")
+        tokenizer.count_tokens("hello")
 
 
-def test_async_init_with_invalid_model():
+@pytest.mark.asyncio
+async def test_async_count_tokens_with_invalid_model(
+    mock_async_provider, mock_async_xai_client
+):
+    tokenizer = AsyncXaiTokenizer("invalid-model")
+
     with pytest.raises(ValueError, match="Unsupported model"):
-        AsyncXaiTokenizer("invalid-model")
+        await tokenizer.count_tokens("hello")
 
 
-def test_sync_count_tokens_normal_input(valid_model, mock_sync_xai_client):
+def test_sync_count_tokens_normal_input(
+    valid_model, mock_sync_provider, mock_sync_xai_client
+):
     tokenizer = XaiTokenizer(valid_model)
 
     response = tokenizer.count_tokens("hello")
@@ -75,7 +119,7 @@ def test_sync_count_tokens_normal_input(valid_model, mock_sync_xai_client):
     assert isinstance(response, TokenizerResponse)
     assert response.input_tokens == 3
     assert response.model == valid_model
-    assert response.provider == Provider.XAI.value
+    assert response.provider == ProviderName.XAI.value
 
     mock_sync_xai_client.tokenize.tokenize_text.assert_called_once_with(
         model=valid_model,
@@ -83,7 +127,9 @@ def test_sync_count_tokens_normal_input(valid_model, mock_sync_xai_client):
     )
 
 
-def test_sync_count_tokens_empty_string(valid_model, mock_sync_xai_client):
+def test_sync_count_tokens_empty_string(
+    valid_model, mock_sync_provider, mock_sync_xai_client
+):
     mock_sync_xai_client.tokenize.tokenize_text.return_value = []
 
     tokenizer = XaiTokenizer(valid_model)
@@ -92,7 +138,9 @@ def test_sync_count_tokens_empty_string(valid_model, mock_sync_xai_client):
     assert response.input_tokens == 0
 
 
-def test_sync_count_tokens_large_input(valid_model, mock_sync_xai_client):
+def test_sync_count_tokens_large_input(
+    valid_model, mock_sync_provider, mock_sync_xai_client
+):
     mock_sync_xai_client.tokenize.tokenize_text.return_value = ["t"] * 10_000
 
     tokenizer = XaiTokenizer(valid_model)
@@ -103,7 +151,7 @@ def test_sync_count_tokens_large_input(valid_model, mock_sync_xai_client):
 
 @pytest.mark.asyncio
 async def test_async_count_tokens_normal_input(
-    valid_model, mock_async_xai_client
+    valid_model, mock_async_provider, mock_async_xai_client
 ):
     tokenizer = AsyncXaiTokenizer(valid_model)
 
@@ -112,7 +160,7 @@ async def test_async_count_tokens_normal_input(
     assert isinstance(response, TokenizerResponse)
     assert response.input_tokens == 4
     assert response.model == valid_model
-    assert response.provider == Provider.XAI.value
+    assert response.provider == ProviderName.XAI.value
 
     mock_async_xai_client.tokenize.tokenize_text.assert_awaited_once_with(
         model=valid_model,
@@ -122,7 +170,7 @@ async def test_async_count_tokens_normal_input(
 
 @pytest.mark.asyncio
 async def test_async_count_tokens_empty_string(
-    valid_model, mock_async_xai_client
+    valid_model, mock_async_provider, mock_async_xai_client
 ):
     mock_async_xai_client.tokenize.tokenize_text.return_value = []
 
