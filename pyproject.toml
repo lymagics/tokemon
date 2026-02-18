@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tokemon"
-version = "0.1.0"
+version = "0.1.1"
 description = "A unified Python library for counting tokens across multiple LLM providers."
 authors = [{name = "Viacheslav Lymanskyi", email = "hello@lymagics.dev"}]
 readme = "README.md"
@@ -15,6 +15,7 @@ dependencies = [
     "anthropic[aiohttp]>=0.76.0",
     "xai-sdk>=1.5.0",
     "google-genai>=1.60.0",
+    "async-lru>=2.1.0",
 ]
 classifiers = [
     "Intended Audience :: Developers",

@@ -5,7 +5,7 @@ from ..model import TokenizerResponse
 
 class Tokenizer(abc.ABC):
     def __init__(self, model: str):
-        pass
+        self.model = model
 
     @abc.abstractmethod
     def count_tokens(self, text: str) -> TokenizerResponse:
@@ -14,7 +14,7 @@ class Tokenizer(abc.ABC):
 
 class AsyncTokenizer(abc.ABC):
     def __init__(self, model: str):
-        pass
+        self.model = model
 
     @abc.abstractmethod
     async def count_tokens(self, text: str) -> TokenizerResponse:
