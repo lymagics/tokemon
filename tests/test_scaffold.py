@@ -91,9 +91,6 @@ def mock_providers(monkeypatch):
     return mocks
 
 
-# --- tokemon() factory tests ---
-
-
 def test_openai_sync_factory(mock_tokenizers):
     result = tokemon(
         model="gpt-4",
@@ -198,9 +195,6 @@ def test_invalid_mode_treated_as_sync(mock_tokenizers):
 
     mock_tokenizers["OpenAITokenizer"].assert_called_once_with(model="gpt-4")
     assert result is mock_tokenizers["OpenAITokenizer"].return_value
-
-
-# --- tokemon_models() factory tests ---
 
 
 def test_tokemon_models_openai_sync(mock_providers):
